@@ -4,8 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ToDoAPI.Models;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.Options;
+using ToDoAPI.Services;
 
 namespace ToDoAPI
 {
@@ -21,12 +22,18 @@ namespace ToDoAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-            services.AddDbContext<ToDoContext>(opt => opt.UseInMemoryDatabase("ToDoItem"));
+            //services.AddDbContext<ToDoContext>(opt => opt.UseInMemoryDatabase("ToDoItem"));
+            services.Configure<ToDoDatabaseSettings>(
+                        Configuration.GetSection(nameof(ToDoDatabaseSettings)));
+            services.AddSingleton<IToDoDatabaseSettings>(sp =>
+            sp.GetRequiredService<IOptions<ToDoDatabaseSettings>>().Value);
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "1" });
             });
+            services.AddSingleton<ToDoService>();
+            services.AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+using ToDoAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ToDoAPI.Models;
@@ -13,30 +13,31 @@ namespace ToDoAPI.Controllers
     [ApiController]
     public class ToDoItemsController : ControllerBase
     {
-        private readonly ToDoContext _context;
+        private readonly ToDoService toDoService;
 
-        public ToDoItemsController(ToDoContext context)
+        public ToDoItemsController(ToDoService service)
         {
-            _context = context;
+            toDoService = service;
         }
 
         // GET: api/ToDoItems
         [HttpGet]
-        public IEnumerable<ToDoItem> GetTodoItems()
+        public ActionResult<List<ToDoItem>> GetTodoItems()
         {
-            return _context.TodoItems;
+            List<ToDoItem> items = toDoService.Get();
+            return items;
         }
 
         // GET: api/ToDoItems/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetToDoItem([FromRoute] long id)
+        public ActionResult<ToDoItem> GetToDoItem([FromRoute] long id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var toDoItem = await _context.TodoItems.FindAsync(id);
+            var toDoItem = toDoService.Get(id);
 
             if (toDoItem == null)
             {
@@ -48,78 +49,48 @@ namespace ToDoAPI.Controllers
 
         // PUT: api/ToDoItems/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutToDoItem([FromRoute] long id, [FromBody] ToDoItem toDoItem)
+
+        public ActionResult<ToDoItem> Update(long id, ToDoItem item)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != toDoItem.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(toDoItem).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ToDoItemExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            var itemFound = toDoService.Get(id);
+            if (item == null)
+                return NotFound();
+            toDoService.Update(itemFound);
 
             return NoContent();
         }
 
         // POST: api/ToDoItems
         [HttpPost]
-        public async Task<IActionResult> PostToDoItem([FromBody] ToDoItem toDoItem)
+        public ActionResult<ToDoItem> PostToDoItem([FromBody] ToDoItem toDoItem)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            _context.TodoItems.Add(toDoItem);
-            await _context.SaveChangesAsync();
+            toDoService.Create(toDoItem);
 
             return CreatedAtAction(nameof(GetToDoItem), new { id = toDoItem.Id }, toDoItem);
         }
 
         // DELETE: api/ToDoItems/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteToDoItem([FromRoute] long id)
+        public ActionResult<ToDoItem> DeleteToDoItem([FromRoute] long id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var toDoItem = await _context.TodoItems.FindAsync(id);
+            var toDoItem = toDoService.Get(id);
             if (toDoItem == null)
             {
                 return NotFound();
             }
-
-            _context.TodoItems.Remove(toDoItem);
-            await _context.SaveChangesAsync();
+            toDoService.Delete(id);
 
             return Ok(toDoItem);
-        }
-
-        private bool ToDoItemExists(long id)
-        {
-            return _context.TodoItems.Any(e => e.Id == id);
         }
     }
 }

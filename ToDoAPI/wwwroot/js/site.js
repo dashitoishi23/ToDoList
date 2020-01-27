@@ -10,10 +10,16 @@ function getItems() {
 
 function addItem() {
     const addNameTextbox = document.getElementById('add-name');
+    let id;
+    fetch(uri)
+        .then(data => {
+            id = data.length;
+        })
 
     const item = {
-        isComplete: false,
-        name: addNameTextbox.value.trim()
+        Id: id + 1,
+        IsComplete: false,
+        Name: addNameTextbox.value.trim()
     };
 
     fetch(uri, {
@@ -43,9 +49,9 @@ function deleteItem(id) {
 function displayEditForm(id) {
     const item = todos.find(item => item.id === id);
 
-    document.getElementById('edit-name').value = item.name;
-    document.getElementById('edit-id').value = item.id;
-    document.getElementById('edit-isComplete').checked = item.isComplete;
+    document.getElementById('edit-name').value = item.Name;
+    document.getElementById('edit-id').value = item.Id;
+    document.getElementById('edit-isComplete').checked = item.IsComplete;
     document.getElementById('editForm').style.display = 'block';
 }
 
@@ -95,15 +101,15 @@ function _displayItems(data) {
         let isCompleteCheckbox = document.createElement('input');
         isCompleteCheckbox.type = 'checkbox';
         isCompleteCheckbox.disabled = true;
-        isCompleteCheckbox.checked = item.isComplete;
+        isCompleteCheckbox.checked = item.IsComplete;
 
         let editButton = button.cloneNode(false);
         editButton.innerText = 'Edit';
-        editButton.setAttribute('onclick', `displayEditForm(${item.id})`);
+        editButton.setAttribute('onclick', `displayEditForm(${item.Id})`);
 
         let deleteButton = button.cloneNode(false);
         deleteButton.innerText = 'Delete';
-        deleteButton.setAttribute('onclick', `deleteItem(${item.id})`);
+        deleteButton.setAttribute('onclick', `deleteItem(${item.Id})`);
 
         let tr = tBody.insertRow();
 
@@ -111,7 +117,7 @@ function _displayItems(data) {
         td1.appendChild(isCompleteCheckbox);
 
         let td2 = tr.insertCell(1);
-        let textNode = document.createTextNode(item.name);
+        let textNode = document.createTextNode(item.Name);
         td2.appendChild(textNode);
 
         let td3 = tr.insertCell(2);
